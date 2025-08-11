@@ -9,8 +9,8 @@ import time
 
 # ===== SPOTIFY AUTH =====
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id="b3b228ac403b4cad8c4a42b940935ae2",
-    client_secret="56ad1234f51346e8a9fcc1162586f5c3",
+    client_id="CLIENT_ID",
+    client_secret="CLIENT_SCRT",
     redirect_uri="http://127.0.0.1:8888/callback",
     scope="user-read-currently-playing"
 ))

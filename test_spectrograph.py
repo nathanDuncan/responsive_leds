@@ -35,6 +35,14 @@ stream = p.open(format=FORMAT,
 # ===== MATPLOTLIB SETUP =====
 plt.ion()
 fig, ax = plt.subplots()
+# For FFT
+line, = ax.plot([], [], lw=2)
+ax.set_xlim(0, 22050)  # Nyquist freq (half of 44100)
+ax.set_ylim(0, 10000)  # Adjust based on expected amplitude
+ax.set_xlabel("Frequency (Hz)")
+ax.set_ylabel("Amplitude")
+ax.set_title("Live FFT Frequency Spectrum")
+ax.grid(True)
 
 def plot_spectrogram(audio_data):
     f, t, Zxx = stft(audio_data, RATE, nperseg=256)
@@ -44,12 +52,42 @@ def plot_spectrogram(audio_data):
     ax.set_xlabel('Time [S]')
     plt.pause(0.01)
 
+def plot_fft(signal, sample_rate):
+    """
+    Plots a single FFT frame for the given audio signal.
+    
+    Parameters:
+        signal (np.ndarray): 1D array of audio samples.
+        sample_rate (int): Sampling rate in Hz.
+    """
+    # Mono conversion if needed
+    if signal.ndim > 1:
+        signal = signal.mean(axis=1)
+
+    # Apply FFT
+    fft_result = np.fft.fft(signal)
+    fft_magnitude = np.abs(fft_result)  # Magnitude spectrum
+
+    # Only keep the positive frequencies
+    freqs = np.fft.fftfreq(len(signal), 1/sample_rate)
+    mask = freqs >= 0
+    freqs = freqs[mask]
+    fft_magnitude = fft_magnitude[mask]
+
+    # Plot
+    line.set_data(freqs, fft_magnitude)
+    ax.set_ylim(0, max(fft_magnitude)*1.1)  # auto-scale y axis
+
+    fig.canvas.draw()
+    fig.canvas.flush_events()
+
+
 # ===== MAIN ROUTINE =====
 print("Listening for audio... Press Ctrl+C to stop.")
 
 try: 
-    # while True:
-    for i in range(20):
+    while True:
+    # for i in range(20):
         # Get currently playing track
         print("[INFO] Getting current track")
         current_track = sp.currently_playing()
@@ -63,11 +101,17 @@ try:
         # Read audio chunk from system
         data = stream.read(CHUNK, exception_on_overflow=False)
         audio_np = np.frombuffer(data, dtype=np.int16)
+        # If stereo, convert to mono by averaging channels
+        if CHANNELS == 2:
+            audio_np = audio_np.reshape(-1, 2)
+            audio_np = audio_np.mean(axis=1)
 
         # Plot spectrogram
-        plot_spectrogram(audio_np)
+        # plot_spectrogram(audio_np)
+        # Plot FFT
+        plot_fft(audio_np, RATE)
 
-        time.sleep(2.05)
+        time.sleep(0.05)
 except KeyboardInterrupt:
     print('\nStopping...')
     stream.stop_stream()

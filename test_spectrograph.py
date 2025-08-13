@@ -7,10 +7,14 @@ import matplotlib.pyplot as plt
 from scipy.signal import stft 
 import time
 
+import sptify_config
+
+print("[INFO] Starting program...")
+
 # ===== SPOTIFY AUTH =====
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id="CLIENT_ID",
-    client_secret="CLIENT_SCRT",
+    client_id=sptify_config.SPTIFY_CLIENT_ID,
+    client_secret=sptify_config.SPTIFY_CLIENT_SECRET,
     redirect_uri="http://127.0.0.1:8888/callback",
     scope="user-read-currently-playing"
 ))
@@ -44,9 +48,13 @@ def plot_spectrogram(audio_data):
 print("Listening for audio... Press Ctrl+C to stop.")
 
 try: 
-    while True:
+    # while True:
+    for i in range(20):
         # Get currently playing track
+        print("[INFO] Getting current track")
         current_track = sp.currently_playing()
+
+        # print(f"[INFO] Current Track: {current_track}")
         if current_track and current_track['is_playing']:
             song = current_track['item']['name']
             artist = current_track['item']['artists'][0]['name']
@@ -59,9 +67,11 @@ try:
         # Plot spectrogram
         plot_spectrogram(audio_np)
 
-        time.sleep(0.05)
+        time.sleep(2.05)
 except KeyboardInterrupt:
     print('\nStopping...')
     stream.stop_stream()
     stream.close()
     p.terminate()
+
+print("[INFO] Program complete.")
